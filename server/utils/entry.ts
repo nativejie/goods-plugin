@@ -12,16 +12,19 @@ const HMRClientScript = `@lukeapage/webpack-hot-middleware/client?path=${HMR_URL
 const backgroundPath = resolve(src, './background/index.ts');
 const optionsPath = resolve(src, './options/index.tsx');
 const popupPath = resolve(src, './popup/index.tsx');
+const injectPath = resolve(src, './inject/index.ts');
 
 const devEntry: Record<string, string[]> = {
     background: [HMRClientScript, backgroundPath],
     options: [HMRClientScript, optionsPath],
     popup: [HMRClientScript, popupPath],
+    inject: [HMRClientScript, injectPath],
 };
 const prodEntry: Record<string, string[]> = {
     background: [backgroundPath],
     options: [optionsPath],
     popup: [popupPath],
+    inject: [injectPath],
 };
 const entry = __DEV__ ? devEntry : prodEntry;
 

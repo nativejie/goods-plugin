@@ -41,7 +41,7 @@
         ]
     },
     "dependencies": {
-        "antd": "^4.19.1",
+        "@arco-design/web-react": "^2.46.3",
         "dayjs": "^1.10.8",
         "jquery": "^3.6.0",
         "lodash": "^4.17.21",
