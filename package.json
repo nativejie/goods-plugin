@@ -24,7 +24,9 @@
         "lint-style": "stylelint --config .stylelintrc.json src/**/*.{css,less,scss}",
         "clean": "rimraf -rf ./extension ./dist ./*.zip ./*.crx",
         "reinstall": "rimraf -rf ./node_modules && pnpm",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "lint:fix": "eslint --fix --ext .ts,.tsx  ./src/**/*.tsx ./{src,server}/**/*.ts",
+        "stylelint:fix": "stylelint --fix src/**/*.{css,less,scss}"
     },
     "lint-staged": {
         "*.{ts,tsx,js}": [

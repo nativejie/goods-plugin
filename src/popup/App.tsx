@@ -2,7 +2,9 @@ import './App.scss';
 
 const App = () => (
     <div className="app">
-        <h1 className="title">popup page</h1>
+        <div className="app__header">
+            <div className="app__title">抖客助手</div>
+        </div>
     </div>
 );
 

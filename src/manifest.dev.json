@@ -1,10 +1,10 @@
 {
-    "name": "awesome chrome extension boilerplate",
-    "version": "1.0",
-    "description": "made by awesome-chrome-extension-boilerplate",
+    "name": "抖客助手",
+    "version": "1.0.0",
+    "description": "抖客助手，采集商家信息，商品信息",
     "manifest_version": 2,
     "minimum_chrome_version": "80",
-    "permissions": [],
+    "permissions": ["storage", "*://*/*", "cookies", "unlimitedStorage"],
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self';",
     "web_accessible_resources": ["icons/*", "images/*", "fonts/*"],
     "background": {
@@ -13,9 +13,14 @@
     },
     "content_scripts": [
         {
-            "matches": ["https://github.com/*"],
+            "matches": [
+                "https://buyin.jinritemai.com/dashboard/merch-picking-hall/center*",
+                "https://buyin.jinritemai.com/dashboard/merch-picking-hall/merch_promoting?id=*",
+                "https://buyin.jinritemai.com/mpa/pigeonIM?friendId=*"
+            ],
             "css": ["css/all.css"],
-            "js": ["js/all.js"]
+            "js": ["js/all.js"],
+            "run_at": "document_end"
         }
     ],
     "browser_action": {
@@ -36,5 +41,6 @@
         "32": "icons/extension-icon-x32.png",
         "48": "icons/extension-icon-x48.png",
         "128": "icons/extension-icon-x128.png"
-    }
+    },
+    "homepage_url": "https://www.qinayu.cn/"
 }
