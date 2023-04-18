@@ -1,10 +1,9 @@
-import { CSSProperties } from 'react';
+import { Button, Input, InputNumber, Modal, Space, Typography } from '@arco-design/web-react';
+import { IconBytedanceColor } from '@arco-design/web-react/icon';
+import { CSSProperties, useState } from 'react';
 import ReactDOM from 'react-dom';
 
 import './style.scss';
-
-// import { IconBytedanceColor } from '@arco-design/web-react/icon';
-// import { Modal } from '@arco-design/web-react';
 
 console.log(`Current page's url must be prefixed with https://github.com`);
 
@@ -31,7 +30,7 @@ function injectCustomJs(jsPath = 'js/inject.js') {
 }
 
 function SearchDialog() {
-    // const [visible, setVisible] = useState(false);
+    const [visible, setVisible] = useState(false);
     const wrapperStyle: CSSProperties = {
         position: 'fixed',
         right: 0,
@@ -40,6 +39,7 @@ function SearchDialog() {
         height: 80,
         width: 80,
         padding: 10,
+        boxSizing: 'border-box',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -51,19 +51,66 @@ function SearchDialog() {
         zIndex: 9999,
     };
 
-    // const handleClickIcon = () => {
-    //     setVisible(true);
-    // };
+    const handleClickIcon = () => {
+        setVisible(true);
+    };
+
+    const footer = (
+        <Space>
+            <Button type="outline">开始采集</Button>
+            <Button type="outline" status="success">
+                导出结果
+            </Button>
+        </Space>
+    );
 
     return (
         <>
-            {/* <Modal visible={visible} title="采集设置">
-                <div>123</div>
-            </Modal> */}
+            <Modal
+                footer={footer}
+                visible={visible}
+                onCancel={() => setVisible(false)}
+                title="采集设置"
+            >
+                <Space>
+                    <Typography.Text>每采集</Typography.Text>
+                    <InputNumber
+                        mode="button"
+                        defaultValue={30}
+                        suffix="条"
+                        style={{ width: 160, margin: '10px 24px 10px 0' }}
+                    />
+                    <Typography.Text>等待</Typography.Text>
+                    <InputNumber
+                        mode="button"
+                        defaultValue={60}
+                        suffix="秒"
+                        style={{ width: 160, margin: '10px 24px 10px 0' }}
+                    />
+                </Space>
+                <div style={{ height: 20 }} />
+                <Typography.Text bold>标题配置</Typography.Text>
+                <Typography.Text type="secondary">（多条使用#分割）</Typography.Text>
+                <Input.TextArea
+                    allowClear
+                    rows={4}
+                    placeholder="请输入标题，如：标题1#标题2#标题3"
+                    style={{ margin: '10px 0' }}
+                />
+                <div>
+                    <Typography.Text type="secondary">
+                        当前采集第 <Typography.Text bold>999</Typography.Text> 页 共{' '}
+                        <Typography.Text bold>1000</Typography.Text> 页
+                    </Typography.Text>
+                </div>
+                <Typography.Text type="secondary">
+                    已采集 <Typography.Text bold>2000</Typography.Text> 条记录
+                </Typography.Text>
+            </Modal>
             {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <div style={wrapperStyle}>
-                {/* <IconBytedanceColor /> */}
-                <div style={{ fontSize: 12 }}>打开抖客助手</div>
+            <div style={wrapperStyle} onClick={() => handleClickIcon()}>
+                <IconBytedanceColor fontSize={30} />
+                <div style={{ fontSize: 12 }}>打开助手</div>
             </div>
         </>
     );
