@@ -43,6 +43,7 @@
     "dependencies": {
         "@arco-design/web-react": "^2.46.3",
         "dayjs": "^1.10.8",
+        "dexie": "^3.2.3",
         "jquery": "^3.6.0",
         "lodash": "^4.17.21",
         "normalize.css": "^8.0.1",

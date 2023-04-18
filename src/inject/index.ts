@@ -6,7 +6,10 @@
     XHR.open = function (_method: string, url: string) {
         this.addEventListener('load', () => {
             // console.log('xhr response23213:', this.response);
-            if (url === 'https://buyin.jinritemai.com/pc/selection/search/pmt') {
+            if (
+                url === 'https://buyin.jinritemai.com/pc/selection/search/pmt' &&
+                localStorage.getItem('isCollecting') === 'true'
+            ) {
                 window.postMessage({ cmd: 'products', data: this.response }, '*');
             }
         });

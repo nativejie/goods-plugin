@@ -3,6 +3,7 @@ import { IconBytedanceColor } from '@arco-design/web-react/icon';
 import { CSSProperties, useState } from 'react';
 import ReactDOM from 'react-dom';
 
+import '@arco-design/web-react/dist/css/arco.css';
 import './style.scss';
 
 console.log(`Current page's url must be prefixed with https://github.com`);
@@ -30,6 +31,9 @@ function injectCustomJs(jsPath = 'js/inject.js') {
 
 function SearchDialog() {
     const [visible, setVisible] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [isStart, setIsStart] = useState(false);
+
     const wrapperStyle: CSSProperties = {
         position: 'fixed',
         right: 0,
@@ -51,26 +55,43 @@ function SearchDialog() {
     };
 
     const handleClickIcon = () => {
-        chrome.runtime.sendMessage({
-            action: 'collectProductData',
-            products: [
-                {
-                    promotion_id: 2312321,
-                },
-                {
-                    promotion_id: 231322321,
-                },
-                {
-                    promotion_id: 231322332321,
-                },
-            ] as any,
-        });
+        // chrome.runtime.sendMessage({
+        //     action: 'collectProductData',
+        //     products: [
+        //         {
+        //             promotion_id: 2312321,
+        //         },
+        //         {
+        //             promotion_id: 231322321,
+        //         },
+        //         {
+        //             promotion_id: 231322332321,
+        //         },
+        //     ] as any,
+        // });
         setVisible(true);
+    };
+
+    const handleClickStart = () => {
+        localStorage.setItem('isCollecting', 'true');
+        setIsStart(!isStart);
+        if (isStart) {
+            // 停止采集
+        } else {
+            document
+                .querySelector('.auxo-select-selector input')
+                ?.setAttribute('value', searchText);
+            const event = new Event('input', { bubbles: true });
+            document.querySelector('.auxo-select-selector input')?.dispatchEvent(event);
+            (document.querySelector('.auxo-input-search-button') as HTMLElement)?.click();
+        }
     };
 
     const footer = (
         <Space>
-            <Button type="outline">开始采集</Button>
+            <Button type="outline" onClick={() => handleClickStart()}>
+                {isStart ? '停止采集' : '开始采集'}
+            </Button>
             <Button type="outline" status="warning">
                 查看表格
             </Button>
@@ -108,6 +129,7 @@ function SearchDialog() {
                 <Typography.Text bold>标题配置</Typography.Text>
                 <Typography.Text type="secondary">（多条使用#分割）</Typography.Text>
                 <Input.TextArea
+                    onChange={setSearchText}
                     allowClear
                     rows={4}
                     placeholder="请输入标题，如：标题1#标题2#标题3"
@@ -143,8 +165,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // 监听Inject返回
 function handleMessage(event: any) {
     if (event.data && event.data.cmd === 'products') {
-        console.log('products:', event.data.data);
-        chrome.runtime.sendMessage({ action: 'collectProductData', products: event.data.data });
+        const { promotions: products, has_more = false } = JSON.parse(event.data.data)?.data;
+        if (has_more) {
+            chrome.runtime.sendMessage({ action: 'collectProductData', products });
+            (document.querySelector('.auxo-pagination-next') as HTMLElement)?.click();
+        } else {
+            localStorage.setItem('isCollecting', 'false');
+            chrome.runtime.sendMessage({ action: 'collectSuccess' });
+        }
     }
 }
 
