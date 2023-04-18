@@ -25,6 +25,7 @@
         {
             "matches": [
                 "https://arco.design/*",
+                "https://buyin.jinritemai.com/dashboard/merch-picking-hall",
                 "https://buyin.jinritemai.com/dashboard/merch-picking-hall/center*",
                 "https://buyin.jinritemai.com/dashboard/merch-picking-hall/merch_promoting?id=*",
                 "https://buyin.jinritemai.com/mpa/pigeonIM?friendId=*"

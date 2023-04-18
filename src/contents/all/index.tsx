@@ -1,4 +1,10 @@
+import { CSSProperties } from 'react';
+import ReactDOM from 'react-dom';
+
 import './style.scss';
+
+// import { IconBytedanceColor } from '@arco-design/web-react/icon';
+// import { Modal } from '@arco-design/web-react';
 
 console.log(`Current page's url must be prefixed with https://github.com`);
 
@@ -24,31 +30,57 @@ function injectCustomJs(jsPath = 'js/inject.js') {
     document.head.append(temp);
 }
 
-function initCustomPanel() {
-    const panel = document.createElement('div');
-    panel.className = 'chrome-plugin-demo-panel';
-    panel.innerHTML = `
-		<h2>injected-script操作content-script演示区：</h2>
-		<div class="btn-area">
-			<a href="javascript:sendMessageToContentScriptByPostMessage('你好，我是普通页面！')">通过postMessage发送消息给content-script</a><br>
-			<a href="javascript:sendMessageToContentScriptByEvent('你好啊！我是通过DOM事件发送的消息！')">通过DOM事件发送消息给content-script</a><br>
-			<a href="javascript:invokeContentScript('sendMessageToBackground()')">发送消息到后台或者popup</a><br>
-		</div>
-		<div id="my_custom_log">
-		</div>
-	`;
-    document.body.append(panel);
+function SearchDialog() {
+    // const [visible, setVisible] = useState(false);
+    const wrapperStyle: CSSProperties = {
+        position: 'fixed',
+        right: 0,
+        top: '50%',
+        transform: 'translateX(-50%)',
+        height: 80,
+        width: 80,
+        padding: 10,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
+        background: '#fff',
+        boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
+        borderRadius: '50%',
+        cursor: 'pointer',
+        zIndex: 9999,
+    };
+
+    // const handleClickIcon = () => {
+    //     setVisible(true);
+    // };
+
+    return (
+        <>
+            {/* <Modal visible={visible} title="采集设置">
+                <div>123</div>
+            </Modal> */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <div style={wrapperStyle}>
+                {/* <IconBytedanceColor /> */}
+                <div style={{ fontSize: 12 }}>打开抖客助手</div>
+            </div>
+        </>
+    );
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     injectCustomJs();
-    initCustomPanel();
+    const div = document.createElement('div');
+    div.id = 'search-dialog';
+    document.body.append(div);
+    ReactDOM.render(<SearchDialog />, div);
 });
 
 // 监听Inject返回
 function handleMessage(event: any) {
-    if (event.data && event.data.cmd === 'xhr-response') {
-        console.log('Received xhr response:', event.data.data);
+    if (event.data && event.data.cmd === 'products') {
+        console.log('products:', event.data.data);
     }
 }
 

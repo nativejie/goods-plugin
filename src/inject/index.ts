@@ -1,15 +1,17 @@
 (function (xhr: any) {
     const XHR = xhr.prototype;
 
-    const { send } = XHR;
+    const { open } = XHR;
 
-    XHR.send = function () {
+    XHR.open = function (_method: string, url: string) {
         this.addEventListener('load', () => {
-            console.log('xhr response', this.response);
-            window.postMessage({ cmd: 'xhr-response', data: this.response }, '*');
+            // console.log('xhr response23213:', this.response);
+            if (url === 'https://buyin.jinritemai.com/pc/selection/search/pmt') {
+                window.postMessage({ cmd: 'products', data: this.response }, '*');
+            }
         });
         // eslint-disable-next-line prefer-rest-params
-        return Reflect.apply(send, this, arguments);
+        return Reflect.apply(open, this, arguments);
     };
 })(XMLHttpRequest);
 
