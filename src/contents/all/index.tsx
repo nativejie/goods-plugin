@@ -12,7 +12,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const { type, details } = request;
     console.log(type, details);
     console.log(sender);
-
     sendResponse('Response from content script');
 });
 
@@ -52,12 +51,29 @@ function SearchDialog() {
     };
 
     const handleClickIcon = () => {
+        chrome.runtime.sendMessage({
+            action: 'collectProductData',
+            products: [
+                {
+                    promotion_id: 2312321,
+                },
+                {
+                    promotion_id: 231322321,
+                },
+                {
+                    promotion_id: 231322332321,
+                },
+            ] as any,
+        });
         setVisible(true);
     };
 
     const footer = (
         <Space>
             <Button type="outline">开始采集</Button>
+            <Button type="outline" status="warning">
+                查看表格
+            </Button>
             <Button type="outline" status="success">
                 导出结果
             </Button>
@@ -128,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function handleMessage(event: any) {
     if (event.data && event.data.cmd === 'products') {
         console.log('products:', event.data.data);
+        chrome.runtime.sendMessage({ action: 'collectProductData', products: event.data.data });
     }
 }
 
