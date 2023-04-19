@@ -15,17 +15,26 @@ type DbProduct = {
     wechat?: string;
     is_processed?: boolean;
     process_time?: number;
+    task_id?: string;
+};
+
+type Task = {
+    task_id: string;
+    title: string;
+    status: string;
 };
 
 class ProductDexie extends Dexie {
     products!: Dexie.Table<DbProduct>;
+    tasks!: Dexie.Table<Task>;
 
     constructor() {
         super('douke-dashboard');
 
         this.version(1).stores({
             products:
-                '++id, promotion_id, product_name, product_url, store_name, store_score, product_score, logistics_score, service_score, phone, wechat, is_processed, process_time',
+                '++id, promotion_id, product_name, product_url, store_name, store_score, product_score, logistics_score, service_score, phone, wechat, is_processed, process_time, task_id',
+            tasks: '++id, task_id, title, status',
         });
     }
 }
@@ -33,21 +42,21 @@ class ProductDexie extends Dexie {
 const db = new ProductDexie();
 // let productQueue: Product[] = [];
 
-chrome.webRequest.onCompleted.addListener(
-    (details) => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            chrome.tabs.sendMessage(tabs?.[0]?.id as number, {
-                type: 'onCompleted',
-                details,
-            });
-        });
-        // console.log(`onCompleted: ${JSON.stringify(details)}`);
-    },
-    {
-        urls: ['https://mcs.snssdk.com/v1/list'],
-    },
-    ['responseHeaders'],
-);
+// chrome.webRequest.onCompleted.addListener(
+//     (details) => {
+//         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//             chrome.tabs.sendMessage(tabs?.[0]?.id as number, {
+//                 type: 'onCompleted',
+//                 details,
+//             });
+//         });
+//         // console.log(`onCompleted: ${JSON.stringify(details)}`);
+//     },
+//     {
+//         urls: ['https://mcs.snssdk.com/v1/list'],
+//     },
+//     ['responseHeaders'],
+// );
 
 // function processNextProduct() {
 //     if (productQueue.length === 0) {
@@ -73,10 +82,33 @@ chrome.webRequest.onCompleted.addListener(
 //     });
 // }
 
+function createTask(data: any) {
+    const { task_id, title } = data;
+    db.tasks
+        .get({
+            task_id,
+        })
+        .then((value: Task | undefined) => {
+            if (!value) {
+                db.tasks.add({
+                    task_id: task_id,
+                    title,
+                    status: 'processing',
+                });
+            } else {
+                value.status = 'processing';
+                db.tasks.update({ task_id }, value);
+            }
+        });
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('request', request, sendResponse, sender);
     if (request.action === 'openNewTab') {
         chrome.tabs.create({ url: request.url });
+    }
+    if (request.action === 'startCollect') {
+        createTask(request.data);
     }
     if (request.action === 'collectProductData') {
         // productQueue = request.products;

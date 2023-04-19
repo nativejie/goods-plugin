@@ -8,7 +8,7 @@
             // console.log('xhr response23213:', this.response);
             if (
                 url === 'https://buyin.jinritemai.com/pc/selection/search/pmt' &&
-                localStorage.getItem('isCollecting') === 'true'
+                localStorage.getItem('collecting-status') === 'processing'
             ) {
                 window.postMessage({ cmd: 'products', data: this.response }, '*');
             }

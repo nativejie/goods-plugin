@@ -1,7 +1,8 @@
 import { Button, Input, InputNumber, Modal, Space, Typography } from '@arco-design/web-react';
 import { IconBytedanceColor } from '@arco-design/web-react/icon';
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 import '@arco-design/web-react/dist/css/arco.css';
 import './style.scss';
@@ -32,7 +33,11 @@ function injectCustomJs(jsPath = 'js/inject.js') {
 function SearchDialog() {
     const [visible, setVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [isStart, setIsStart] = useState(false);
+    const [collectingStatus, setCollectingStatus] = useState<'stop' | 'pause' | 'processing'>(
+        'stop',
+    );
+
+    const taskId = useRef(uuidv4());
 
     const wrapperStyle: CSSProperties = {
         position: 'fixed',
@@ -55,49 +60,64 @@ function SearchDialog() {
     };
 
     const handleClickIcon = () => {
-        // chrome.runtime.sendMessage({
-        //     action: 'collectProductData',
-        //     products: [
-        //         {
-        //             promotion_id: 2312321,
-        //         },
-        //         {
-        //             promotion_id: 231322321,
-        //         },
-        //         {
-        //             promotion_id: 231322332321,
-        //         },
-        //     ] as any,
-        // });
         setVisible(true);
     };
 
-    const handleClickStart = () => {
-        localStorage.setItem('isCollecting', 'true');
-        setIsStart(!isStart);
-        if (isStart) {
-            // 停止采集
+    useEffect(() => {
+        localStorage.setItem('collecting-status', collectingStatus);
+        if (collectingStatus === 'processing') {
+            const collecText = searchText.split('#')[0];
+
+            window.postMessage(
+                {
+                    cmd: 'start-task',
+                    data: {
+                        name: collecText,
+                        id: taskId.current,
+                    },
+                },
+                '*',
+            );
+            localStorage.setItem(
+                'collect-info',
+                JSON.stringify({
+                    currentTaskId: taskId.current,
+                    currentText: collecText,
+                }),
+            );
+            // document
+            //     .querySelector('.auxo-select-selector input')
+            //     ?.setAttribute('value', collecText);
+            // const event = new Event('input', { bubbles: true });
+            // document.querySelector('.auxo-select-selector input')?.dispatchEvent(event);
+            // (document.querySelector('.auxo-input-search-button') as HTMLElement)?.click();
         } else {
-            document
-                .querySelector('.auxo-select-selector input')
-                ?.setAttribute('value', searchText);
-            const event = new Event('input', { bubbles: true });
-            document.querySelector('.auxo-select-selector input')?.dispatchEvent(event);
-            (document.querySelector('.auxo-input-search-button') as HTMLElement)?.click();
+            // 暂停采集
+        }
+    }, [collectingStatus]);
+
+    const handleClickStart = () => {
+        if (collectingStatus === 'stop' || collectingStatus === 'pause') {
+            setCollectingStatus('processing');
+        } else {
+            setCollectingStatus('pause');
         }
     };
 
     const footer = (
         <Space>
             <Button type="outline" onClick={() => handleClickStart()}>
-                {isStart ? '停止采集' : '开始采集'}
+                {collectingStatus === 'processing' ? '暂停采集' : '开始采集'}
             </Button>
-            <Button type="outline" status="warning">
-                查看表格
-            </Button>
+            {(collectingStatus === 'pause' || collectingStatus === 'processing') && (
+                <Button type="outline" onClick={() => setCollectingStatus('stop')} status="danger">
+                    停止采集
+                </Button>
+            )}
             <Button type="outline" status="success">
                 导出结果
             </Button>
+            <Button>查看历史</Button>
         </Space>
     );
 
@@ -172,7 +192,18 @@ function handleMessage(event: any) {
         } else {
             localStorage.setItem('isCollecting', 'false');
             chrome.runtime.sendMessage({ action: 'collectSuccess' });
+            // 向页面发送采集完一个词的消息
+            window.postMessage({
+                cmd: 'collect-success',
+            });
         }
+    }
+    if (event.data.cmd === 'start-task') {
+        console.log(event.data.data);
+        chrome.runtime.sendMessage({
+            action: 'startCollect',
+            data: JSON.parse(localStorage.getItem('collect-info') || '{}'),
+        });
     }
 }
 
