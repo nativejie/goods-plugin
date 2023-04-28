@@ -19,13 +19,102 @@ import './style.scss';
 
 console.log(`Current page's url must be prefixed with https://github.com`);
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('Received message from background script');
-    const { type, details } = request;
-    console.log(type, details);
-    console.log(sender);
-    sendResponse('Response from content script');
-});
+function triggerMouseoverEvent(element: any) {
+    if (!element) {
+        return;
+    }
+    const event = new MouseEvent('mouseover', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+    });
+    element.dispatchEvent(event);
+}
+
+// chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+//     if (request.action === 'getContactInfo') {
+function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function findDOmReady(fn: any) {
+    let count = 0;
+    while (!document.querySelector('.product-shop__shop-title')?.textContent) {
+        await sleep(1000);
+        count++;
+        if (count > 8) {
+            break;
+        }
+    }
+    fn();
+}
+function loadFunction() {
+    if (!window.location.href.includes('merch-picking-hall/merch_promoting')) {
+        return;
+    }
+
+    const port = chrome.runtime.connect({ name: 'contentScript' });
+    // 获取URL的ID参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (!id) {
+        return;
+    }
+    var result = {} as any;
+    const element = document.querySelector('.product-info__button--more');
+    triggerMouseoverEvent(element);
+    setTimeout(() => {
+        var eyes = document.querySelectorAll('span[class*=index__eye]');
+        if (eyes.length > 0) {
+            for (var i = 0; i < eyes.length; i++) {
+                (eyes[i] as any).click();
+            }
+        }
+        setTimeout(() => {
+            result['wechat'] = document.querySelectorAll(
+                'div[class^=index__right]',
+            )?.[0]?.textContent;
+            result['phone'] = document.querySelectorAll(
+                'div[class^=index__right]',
+            )?.[1]?.textContent;
+
+            result['shop_score'] = Number(
+                document.querySelector(
+                    '.product-shop__shop-score-total .product-shop__shop-score-num',
+                )?.textContent,
+            );
+            result['product_score'] = Number(
+                document.querySelector(
+                    '.product-shop__shop-score-product .product-shop__shop-score-num',
+                )?.textContent,
+            );
+            result['logistics_score'] = Number(
+                document.querySelector(
+                    '.product-shop__shop-score-logistics .product-shop__shop-score-num',
+                )?.textContent,
+            );
+            result['service_score'] = Number(
+                document.querySelector(
+                    '.product-shop__shop-score-seller .product-shop__shop-score-num',
+                )?.textContent,
+            );
+            port.postMessage({ contactInfo: result, action: 'getContactInfo', id });
+        }, 1000 * 3);
+    }, 100);
+}
+
+(function () {
+    if (document.readyState === 'complete') {
+        findDOmReady(loadFunction);
+    } else {
+        window.addEventListener('load', () => {
+            findDOmReady(loadFunction);
+        });
+    }
+})();
+
+// return true;
+// }
+// });
 
 // 向页面注入JS
 function injectCustomJs(jsPath = 'js/inject.js') {
@@ -136,52 +225,8 @@ function SearchDialog() {
     };
 
     const handleClickIcon = () => {
-        // chrome.runtime.sendMessage({
-        //     action: 'collectProductData',
-        //     products: [
-        //         {
-        //             promotion_id: 2312321,
-        //         },
-        //         {
-        //             promotion_id: 231322321,
-        //         },
-        //         {
-        //             promotion_id: 231322332321,
-        //         },
-        //     ] as any,
-        // });
         setVisible(true);
     };
-
-    // const handleClickStart = () => {
-    //     // TODO 添加 taskID uuid
-    //     localStorage.setItem('isCollecting', 'true');
-    //     setIsStart(!isStart);
-    //     if (isStart) {
-    //         // 停止采集
-    //     } else {
-    //         document
-    //             .querySelector('.auxo-select-selector input')
-    //             ?.setAttribute('value', searchText);
-    //         const event = new Event('input', { bubbles: true });
-    //         document.querySelector('.auxo-select-selector input')?.dispatchEvent(event);
-    //         (document.querySelector('.auxo-input-search-button') as HTMLElement)?.click();
-    //     }
-    // };
-
-    // const footer = (
-    //     <Space>
-    //         <Button type="outline" onClick={() => handleClickStart()}>
-    //             {isStart ? '停止采集' : '开始采集'}
-    //         </Button>
-    //         <Button type="outline" status="warning">
-    //             查看表格
-    //         </Button>
-    //         <Button type="outline" status="success">
-    //             导出结果
-    //         </Button>
-    //     </Space>
-    // );
 
     const handleAddTask = useCallback(() => {
         const tasks = searchText.split('#');
@@ -235,10 +280,11 @@ function SearchDialog() {
                     localStorage.setItem('isCollecting', 'false');
                     setIsStart(false);
                 }
+                localStorage.setItem('collectionData', JSON.stringify(newTableData));
                 setTableData(newTableData);
             }
         });
-    }, []);
+    }, [tableData]);
 
     // 如果当前采集任务变动，重新开始采集下一个
     useEffect(() => {
@@ -252,17 +298,17 @@ function SearchDialog() {
         if (data.status === 'success') {
             return;
         }
-        setTableData((prev) => {
-            return prev.map((item) => {
-                if (item.id === currentCollectTask.current) {
-                    return {
-                        ...item,
-                        status: 'processing',
-                    };
-                }
-                return item;
-            });
+        const newTableData = tableData.map((item) => {
+            if (item.id === currentCollectTask.current) {
+                return {
+                    ...item,
+                    status: 'processing',
+                };
+            }
+            return item;
         });
+        setTableData(newTableData);
+        localStorage.setItem('collectionData', JSON.stringify(newTableData));
         localStorage.setItem('isCollecting', 'true');
         localStorage.setItem('currentCollectTask', currentCollectTask.current);
         document.querySelector('.auxo-select-selector input')?.setAttribute('value', data?.title);
@@ -289,7 +335,6 @@ function SearchDialog() {
                 }
                 return item;
             });
-            localStorage.removeItem('collectionData');
             localStorage.setItem('collectionData', JSON.stringify(newTableData));
         } else {
             localStorage.setItem('collectionData', JSON.stringify(tableData));
@@ -309,6 +354,14 @@ function SearchDialog() {
             currentCollectTask.current = taksId;
         }
     }, [tableData, currentCollectTask.current, isStart]);
+
+    const handleSendTest = () => {
+        // 570d62d7-842f-4cb2-b415-431673ae2ea8
+        chrome.runtime.sendMessage({
+            action: 'collectSuccess',
+            taskId: localStorage.getItem('currentCollectTask'),
+        });
+    };
 
     return (
         <>
@@ -339,6 +392,9 @@ function SearchDialog() {
                         </Button>
                         <Button type="primary" status="success">
                             导出全部
+                        </Button>
+                        <Button type="primary" onClick={handleSendTest} status="error">
+                            测试
                         </Button>
                     </Space>
                 </div>
