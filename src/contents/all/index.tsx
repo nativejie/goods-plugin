@@ -12,8 +12,10 @@ import { IconBytedanceColor } from '@arco-design/web-react/icon';
 import dayjs from 'dayjs';
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
+// @ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 
+// import XLSX from 'xlsx';
 import '@arco-design/web-react/dist/css/arco.css';
 import './style.scss';
 
@@ -160,7 +162,7 @@ const TaskTable = ({ dataSource }: { dataSource: TaksTableDTO[] }) => {
             title: '状态',
             dataIndex: 'status',
             key: 'status',
-            render(col, item, index) {
+            render(col, item) {
                 if (col === 'success') {
                     return <Tag color="green">采集成功</Tag>;
                 }
@@ -363,6 +365,19 @@ function SearchDialog() {
         });
     };
 
+    const handleClickExportAll = () => {
+        chrome.runtime.sendMessage({
+            action: 'exportAll',
+        });
+    };
+
+    const handleClickStop = () => {
+        localStorage.setItem('isCollecting', 'false');
+        chrome.runtime.sendMessage({
+            action: 'stopCollect',
+        });
+    };
+
     return (
         <>
             <Modal
@@ -390,10 +405,13 @@ function SearchDialog() {
                         <Button type="primary" status="warning" onClick={handleStart}>
                             开始采集
                         </Button>
-                        <Button type="primary" status="success">
+                        <Button type="primary" status="success" onClick={handleClickExportAll}>
                             导出全部
                         </Button>
-                        <Button type="primary" onClick={handleSendTest} status="error">
+                        <Button type="primary" status="success" onClick={handleClickStop}>
+                            停止
+                        </Button>
+                        <Button type="primary" onClick={handleSendTest}>
                             测试
                         </Button>
                     </Space>
@@ -437,6 +455,9 @@ function handleMessage(event: any) {
                 taskId: localStorage.getItem('currentCollectTask'),
             });
         }
+    }
+
+    if (event.data && event.data.cmd === 'exportData') {
     }
 }
 

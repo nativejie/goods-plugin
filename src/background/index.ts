@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import XLSX from 'xlsx';
 
 console.log('This is background page!');
 
@@ -15,7 +16,7 @@ type DbProduct = {
     service_score?: number;
     phone?: string;
     wechat?: string;
-    is_processed?: boolean;
+    is_processed?: number;
     process_time?: number;
 };
 
@@ -93,11 +94,10 @@ chrome.runtime.onConnect.addListener((port) => {
                     db.products
                         .update(product.id!, {
                             ...contactInfo,
-                            is_processed: true,
+                            is_processed: 1,
                             process_time: Date.now(),
                         })
                         .then(() => {
-                            debugger;
                             chrome.tabs.remove(currentTabId);
                             createTabToMatchContactInfo(product.taskId!);
                         });
@@ -112,7 +112,7 @@ function createTabToMatchContactInfo(taskId: string) {
     db.products
         .where('taskId')
         .equals(taskId)
-        .and((product) => product.is_processed === false)
+        .and((product) => product.is_processed === 0)
         .toArray()
         .then((products) => {
             if (products.length === 0) {
@@ -215,7 +215,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         db.products
             .update(product.id, {
                 ...(product || {}),
-                is_processed: true,
+                is_processed: 1,
                 process_time: Date.now(),
             })
             .then(() => {
@@ -239,11 +239,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 service_score: -1,
                 phone: '',
                 wechat: '',
-                is_processed: false,
+                is_processed: 0,
                 process_time: 0,
             } as DbProduct;
         });
         db.products.bulkPut(insertProducts);
         // processNextProduct();
+    }
+
+    if (request.action === 'exportAll') {
+        // 获取所有产品数据
+        db.products
+            .where('is_processed')
+            .equals(1)
+            .toArray()
+            .then((products) => {
+                XLSX.writeFile(
+                    {
+                        SheetNames: ['sheet1'],
+                        Sheets: {
+                            sheet1: XLSX.utils.json_to_sheet(products),
+                        },
+                    },
+                    'products.xlsx',
+                );
+            });
     }
 });
